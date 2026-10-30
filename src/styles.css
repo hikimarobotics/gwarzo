@@ -1,0 +1,169 @@
+:root {
+  --ink: #2a1d17;
+  --paper: #f7ead2;
+  --indigo: #2c3f7a;
+  --gold: #f4c542;
+  font-family: 'Trebuchet MS', system-ui, sans-serif;
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root,
+.app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #f0c27d;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.app {
+  position: relative;
+}
+
+.hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  pointer-events: none;
+}
+
+.hud h1 {
+  margin: 0;
+  font-size: 32px;
+  letter-spacing: 0.08em;
+  color: var(--indigo);
+  text-shadow: 2px 2px 0 var(--paper);
+}
+
+.hud p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgb(247 234 210 / 85%);
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.banner {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, calc(100% - 32px));
+  padding: 18px 22px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--paper);
+  text-align: center;
+  box-shadow: 6px 6px 0 var(--indigo);
+}
+
+.banner h2 {
+  margin: 0 0 6px;
+  color: var(--indigo);
+}
+
+.banner p {
+  margin: 0;
+}
+
+.touch-controls {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 16px;
+  pointer-events: none;
+}
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 56px);
+}
+
+.dpad .up {
+  grid-area: 1 / 2;
+}
+.dpad .left {
+  grid-area: 2 / 1;
+}
+.dpad .right {
+  grid-area: 2 / 3;
+}
+.dpad .down {
+  grid-area: 3 / 2;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.pad {
+  pointer-events: auto;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: rgb(247 234 210 / 80%);
+  color: var(--ink);
+  font: inherit;
+  font-weight: bold;
+  font-size: 18px;
+  touch-action: none;
+}
+
+.pad:active {
+  background: var(--gold);
+}
+
+.actions .jump {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+}
+
+.actions .run {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.touch-only {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .touch-only {
+    display: flex;
+  }
+  .desktop-only {
+    display: none;
+  }
+  .hint {
+    bottom: auto;
+    top: 84px;
+  }
+}
