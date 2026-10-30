@@ -27,6 +27,8 @@ export interface Hero {
   /** Seconds since leaving the ground, for a little forgiveness on late jumps. */
   airTime: number;
   safe: { x: number; y: number };
+  /** The time object the hero is standing on, so it can carry them. */
+  standingOn: string | null;
 }
 
 export const HERO_W = 0.6;
@@ -41,7 +43,7 @@ const ACCEL = 40;
 
 export function spawnHero(level: Level): Hero {
   const { x, y } = level.spawn;
-  return { x, y, vx: 0, vy: 0, facing: 1, onGround: false, climbing: null, mode: 'idle', jumpHeld: false, airTime: 0, safe: { x, y } };
+  return { x, y, vx: 0, vy: 0, facing: 1, onGround: false, climbing: null, mode: 'idle', jumpHeld: false, airTime: 0, safe: { x, y }, standingOn: null };
 }
 
 const overlaps = (h: { x: number; y: number }, b: Box) =>
@@ -51,9 +53,13 @@ function climbAt(level: Level, x: number, y: number): Climb | null {
   return level.climbs.find((c) => Math.abs(x - c.x) < 0.6 && y >= c.y - 0.1 && y < c.y + c.h) ?? null;
 }
 
-/** Advances the hero by dt seconds. Returns a new hero; the old one is left as it was. */
-export function step(prev: Hero, input: Input, level: Level, dt: number): Hero {
+/**
+ * Advances the hero by dt seconds. `moving` are the solid boxes of time objects this frame. Returns a new hero; the
+ * old one is left as it was.
+ */
+export function step(prev: Hero, input: Input, level: Level, dt: number, moving: Box[] = []): Hero {
   const h: Hero = { ...prev, safe: { ...prev.safe } };
+  const boxes = moving.length ? [...level.boxes, ...moving] : level.boxes;
   const pressedJump = input.jump && !prev.jumpHeld;
   h.jumpHeld = input.jump;
   if (input.move !== 0) h.facing = input.move > 0 ? 1 : -1;
@@ -92,6 +98,7 @@ export function step(prev: Hero, input: Input, level: Level, dt: number): Hero {
       h.y = c.y;
     }
     h.onGround = false;
+    h.standingOn = null;
     h.mode = h.climbing ? 'climb' : 'fall';
     if (h.climbing) return h;
   }
@@ -114,7 +121,7 @@ export function step(prev: Hero, input: Input, level: Level, dt: number): Hero {
 
   // Move one axis at a time and push out of anything solid.
   h.x += h.vx * dt;
-  for (const b of level.boxes) {
+  for (const b of boxes) {
     if (!overlaps(h, b)) continue;
     // small ledges (a step) are walked up rather than bumped into
     const stepUp = b.y + b.h - h.y;
@@ -122,25 +129,30 @@ export function step(prev: Hero, input: Input, level: Level, dt: number): Hero {
       h.y = b.y + b.h;
       continue;
     }
-    h.x = h.vx > 0 ? b.x - HERO_W / 2 : b.x + b.w + HERO_W / 2;
+    // pushed out the way they came, or (standing still, with something moving into them) the nearer side
+    const left = h.vx > 0 || (h.vx === 0 && h.x < b.x + b.w / 2);
+    h.x = left ? b.x - HERO_W / 2 : b.x + b.w + HERO_W / 2;
     h.vx = 0;
   }
   h.x = Math.min(Math.max(h.x, level.bounds.minX), level.bounds.maxX);
 
   h.y += h.vy * dt;
   h.onGround = false;
-  for (const b of level.boxes) {
+  h.standingOn = null;
+  for (const b of boxes) {
     if (!overlaps(h, b)) continue;
     if (h.vy <= 0) {
       h.y = b.y + b.h;
       h.onGround = true;
+      h.standingOn = b.id ?? null;
     } else {
       h.y = b.y - HERO_H;
     }
     h.vy = 0;
   }
 
-  if (h.onGround) h.safe = { x: h.x, y: h.y };
+  // only solid ground counts as safe: a time object may not be there when you come back
+  if (h.onGround && !h.standingOn) h.safe = { x: h.x, y: h.y };
   if (h.y < level.killY) {
     h.x = h.safe.x;
     h.y = h.safe.y;

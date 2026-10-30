@@ -10,6 +10,7 @@ import { PALETTE, toon } from './toon';
 
 const FRONT = 1.5; // the street's front edge (toward the camera)
 const BACK = -2; // its back edge
+const DEPTH = 7.8; // how deep the ground is drawn (just above where a fall resets the hero)
 
 /** A small deterministic random, so the town looks the same every visit. */
 function rng(seed: number) {
@@ -250,6 +251,17 @@ function Skyline({ minX, maxX }: { minX: number; maxX: number }) {
   );
 }
 
+/** The breaks between stretches of street, as [from, to] in x. */
+function gaps(level: Level) {
+  const ground = level.boxes.filter((b) => b.kind === 'ground').sort((a, b) => a.x - b.x);
+  const out: [number, number][] = [];
+  for (let i = 1; i < ground.length; i++) {
+    const end = ground[i - 1].x + ground[i - 1].w;
+    if (ground[i].x > end) out.push([end, ground[i].x]);
+  }
+  return out;
+}
+
 export function Daura({ level }: { level: Level }) {
   return (
     <group>
@@ -258,8 +270,9 @@ export function Daura({ level }: { level: Level }) {
           case 'ground':
             return (
               <group key={i}>
-                <mesh material={toon(PALETTE.laterite)} position={[b.x + b.w / 2, b.y + b.h / 2, (FRONT + BACK) / 2 + 0.5]} receiveShadow>
-                  <boxGeometry args={[b.w, b.h, FRONT - BACK + 1]} />
+                {/* drawn deeper than it collides, so gullies look like ravines rather than holes */}
+                <mesh material={toon(PALETTE.laterite)} position={[b.x + b.w / 2, b.y + b.h - DEPTH / 2, (FRONT + BACK) / 2 + 0.5]} receiveShadow>
+                  <boxGeometry args={[b.w, DEPTH, FRONT - BACK + 1]} />
                 </mesh>
                 <mesh material={toon(PALETTE.sand)} position={[b.x + b.w / 2, b.y + b.h + 0.005, (FRONT + BACK) / 2 + 0.5]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
                   <planeGeometry args={[b.w, FRONT - BACK + 1]} />
@@ -279,12 +292,19 @@ export function Daura({ level }: { level: Level }) {
       {level.climbs.map((c, i) => (
         <Rope key={i} c={c} />
       ))}
-      {/* the dry gully floor */}
-      <mesh material={toon(PALETTE.mudDark)} position={[29.5, -6, 0]}>
-        <boxGeometry args={[3, 1, 6]} />
-      </mesh>
+      {/* gully floors wherever the street breaks off */}
+      {gaps(level).map(([x0, x1]) => (
+        <group key={x0}>
+          <mesh material={toon(PALETTE.mudDark)} position={[(x0 + x1) / 2, -DEPTH, (FRONT + BACK) / 2 + 0.5]} receiveShadow>
+            <boxGeometry args={[x1 - x0, 0.2, FRONT - BACK + 1]} />
+          </mesh>
+          <mesh material={toon(PALETTE.mudDark)} position={[(x0 + x1) / 2, -DEPTH / 2, BACK - 0.1]} receiveShadow>
+            <boxGeometry args={[x1 - x0, DEPTH, 0.2]} />
+          </mesh>
+        </group>
+      ))}
       <Palm x={5} z={-2.6} h={4.5} seed={11} />
-      <Palm x={34} z={-2.8} h={5.2} seed={12} />
+      <Palm x={38} z={-2.8} h={5.2} seed={12} />
       <Palm x={72} z={-2.6} h={4.8} seed={13} />
       <Palm x={89} z={-2.7} h={5.5} seed={14} />
       <Skyline minX={level.bounds.minX} maxX={level.bounds.maxX} />
