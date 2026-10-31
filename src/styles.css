@@ -118,8 +118,75 @@ body,
 
 .actions {
   display: flex;
+  flex-direction: column;
   gap: 12px;
   align-items: flex-end;
+}
+
+.drum-pads,
+.move-pads {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.actions .drum {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  font-size: 20px;
+}
+
+.actions .drum.rewind {
+  background: rgb(214 232 255 / 85%);
+}
+.actions .drum.hold {
+  background: rgb(255 236 170 / 85%);
+}
+.actions .drum.hasten {
+  background: rgb(255 214 184 / 85%);
+}
+
+/* the drum's effect on the whole view: cool while rewinding, warm while hastening */
+.time-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.time-rewind .time-tint {
+  opacity: 1;
+  background: radial-gradient(ellipse at center, transparent 45%, rgb(60 120 220 / 40%) 100%);
+}
+
+.time-hasten .time-tint {
+  opacity: 1;
+  background: radial-gradient(ellipse at center, transparent 45%, rgb(255 120 40 / 35%) 100%);
+}
+
+.drum-status {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.drum-status span {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(247 234 210 / 85%);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.drum-status .held {
+  background: var(--gold);
 }
 
 .pad {

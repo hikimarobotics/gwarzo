@@ -28,7 +28,8 @@ function drumGeometry() {
   return new THREE.LatheGeometry(pts, 14);
 }
 
-export function Hero({ state }: { state: RefObject<HeroState> }) {
+/** `drumming` is above 0 while the hero is playing the drum (seconds left of the pose). */
+export function Hero({ state, drumming }: { state: RefObject<HeroState>; drumming?: RefObject<number> }) {
   const root = useRef<THREE.Group>(null!);
   const body = useRef<THREE.Group>(null!);
   const legL = useRef<THREE.Group>(null!);
@@ -101,6 +102,13 @@ export function Hero({ state }: { state: RefObject<HeroState> }) {
       aL = Math.sin(t * 1.1) * 0.04;
       aR = 0.5 + (Math.sin(t * 0.9) > 0.85 ? Math.abs(Math.sin(t * 14)) * 0.25 : 0);
       lean = Math.sin(t * 0.6) * 0.02;
+    }
+
+    // Playing the drum: the left arm squeezes it under the arm, the right hand beats it fast.
+    if (drumming?.current && h.mode !== 'climb') {
+      aL = 0.35;
+      aR = 0.9 + Math.abs(Math.sin(t * 22)) * 0.5;
+      armOut = 0.25;
     }
 
     const k = 18;

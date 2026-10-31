@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DAURA, type Level } from './level';
-import { atGoal, spawnHero, step, type Hero, type Input } from './physics';
+import { spawnHero, step, type Hero, type Input } from './physics';
 
 const DT = 1 / 60;
 const none: Input = { move: 0, up: false, down: false, jump: false, run: false };
@@ -65,19 +65,12 @@ describe('hero movement', () => {
     expect(h.y).toBeGreaterThanOrEqual(0);
   });
 
-  it('can reach the well from the start by walking, jumping and climbing', () => {
-    // a simple auto-player: hold right, jump when blocked or at an edge, climb any rope it meets
+  it('cannot jump the gully: it takes the drum', () => {
     let h = run(spawnHero(DAURA), {}, 30);
-    let jumpFor = 0;
-    for (let i = 0; i < 60 * 60 && !atGoal(h, DAURA); i++) {
-      const blocked = h.onGround && Math.abs(h.vx) < 0.5 && i > 40;
-      const edge = h.onGround && !DAURA.boxes.some((b) => h.x + 1.2 > b.x && h.x + 1.2 < b.x + b.w && Math.abs(b.y + b.h - h.y) < 0.4);
-      const rope = DAURA.climbs.find((c) => c.kind === 'rope' && Math.abs(h.x - c.x) < 0.5);
-      if (jumpFor === 0 && (blocked || edge) && !rope) jumpFor = 30;
-      const jump = jumpFor > 0;
-      if (jumpFor > 0) jumpFor--;
-      h = step(h, { ...none, move: h.climbing ? 0 : 1, run: true, jump: jump && jumpFor > 0, up: !!rope || !!h.climbing }, DAURA, DT);
-    }
-    expect(atGoal(h, DAURA)).toBe(true);
+    h = { ...h, x: 22, safe: { x: 22, y: 0 } };
+    for (let i = 0; i < 300 && h.x < 28.2; i++) h = step(h, { ...none, move: 1, run: true }, DAURA, DT);
+    h = run(h, { move: 1, run: true, jump: true }, 40);
+    h = run(h, { move: 1, run: true }, 120);
+    expect(h.x).toBeLessThan(36); // back on the near side
   });
 });
